@@ -272,6 +272,7 @@ static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_subaquatic_sonar( "subaquatic_sonar" );
 static const efftype_id effect_tapeworm( "tapeworm" );
 static const efftype_id effect_tied( "tied" );
+static const efftype_id effect_took_thorazine( "took_thorazine" );
 static const efftype_id effect_transition_contacts( "transition_contacts" );
 static const efftype_id effect_winded( "winded" );
 
@@ -475,6 +476,7 @@ static const trait_id trait_ROOTS2( "ROOTS2" );
 static const trait_id trait_ROOTS3( "ROOTS3" );
 static const trait_id trait_SAPIOVORE( "SAPIOVORE" );
 static const trait_id trait_SAVANT( "SAVANT" );
+static const trait_id trait_SCHIZOPHRENIC( "SCHIZOPHRENIC" );
 static const trait_id trait_SHELL2( "SHELL2" );
 static const trait_id trait_SHELL3( "SHELL3" );
 static const trait_id trait_SHOUT2( "SHOUT2" );
@@ -2441,24 +2443,9 @@ void Character::process_turn()
     for( const trait_id &mut : get_functioning_mutations() ) {
         mutation_reflex_trigger( mut );
     }
-    //Creature::process_turn() uses speed to restore moves, but for Character, speed has not yet been calculated.
-    //So Creature::process_turn() cannot be used directly here.
-    //Exposed the content of Creature::process_turn() except restore moves here,
-    //and do the reset moves later after recalc_speed_bonus().
-    //The following is the content of Creature::process_turn() except restore moves
-    decrement_summon_timer();
-    if( is_dead_state() ) {
-        return;
-    }
-    reset_bonuses();
 
-    process_effects();
-
-    process_damage_over_time();
-
-    // Call this in case any effects have changed our stats
-    reset_stats();
-    //The above is the content of Creature::process_turn() except reset moves
+    //Creature::process_turn() cannot be used directly here because Character::speed has not yet been calculated
+    Creature::process_turn_no_moves();
 
     // If we're actively handling something we can't just drop it on the ground
     // in the middle of handling it
@@ -12168,6 +12155,11 @@ bool Character::empathizes_with_monster( const mtype_id &monster ) const
         return true;
     }
     return false;
+}
+
+bool Character::schizo_symptoms( int chance ) const
+{
+    return has_trait( trait_SCHIZOPHRENIC ) && !has_effect( effect_took_thorazine ) && one_in( chance );
 }
 
 bool Character::is_driving() const
